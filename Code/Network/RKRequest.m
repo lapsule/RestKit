@@ -286,7 +286,11 @@
 		[_delegate request:self didLoadResponse:response];
 	}
     
-  [self cleanupBackgroundTask];
+    // Moving cleanupBackgroundTask to the end of this method seems to fix the occasional crash when posting the
+    // RKRequestDidLoadResponseNotification. Blake informed me that RKRequestDidLoadResponseNotification releases the request (self),
+    // So I'm a bit unclear as to why calling -cleanupBackgroundTask doesn't crash (if self is dealloced...). Seems to work.
+    // In any case, this needs review. JBE
+    // [self cleanupBackgroundTask];
     
 	NSDictionary* userInfo = [NSDictionary dictionaryWithObject:response forKey:@"response"];
     [[NSNotificationCenter defaultCenter] postNotificationName:RKRequestDidLoadResponseNotification object:self userInfo:userInfo];
@@ -302,6 +306,8 @@
 		[alertView release];
 
 	}
+    
+    [self cleanupBackgroundTask];
 }
 
 - (BOOL)isGET {
