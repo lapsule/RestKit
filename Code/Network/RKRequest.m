@@ -306,8 +306,6 @@
   		[alertView release];
 
   	}
-    
-    [self cleanupBackgroundTask];
 }
 
 - (BOOL)isGET {
