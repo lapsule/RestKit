@@ -74,29 +74,29 @@
 - (void)dealloc {    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-	self.delegate = nil;
-	[_connection cancel];
-	[_connection release];
-	_connection = nil;
-	[_userData release];
-	_userData = nil;
-	[_URL release];
-	_URL = nil;
-	[_URLRequest release];
-	_URLRequest = nil;
-	[_params release];
-	_params = nil;
-	[_additionalHTTPHeaders release];
-	_additionalHTTPHeaders = nil;
-	[_username release];
-	_username = nil;
-	[_password release];
-	_password = nil;
+  	self.delegate = nil;
+  	[_connection cancel];
+  	[_connection release];
+  	_connection = nil;
+  	[_userData release];
+  	_userData = nil;
+  	[_URL release];
+  	_URL = nil;
+  	[_URLRequest release];
+  	_URLRequest = nil;
+  	[_params release];
+  	_params = nil;
+  	[_additionalHTTPHeaders release];
+  	_additionalHTTPHeaders = nil;
+  	[_username release];
+  	_username = nil;
+  	[_password release];
+  	_password = nil;
     
     // Cleanup a background task if there is any
     [self cleanupBackgroundTask];
      
-	[super dealloc];
+	  [super dealloc];
 }
 
 - (void)setRequestBody {
@@ -127,6 +127,8 @@
 			[_URLRequest setValue:[NSString stringWithFormat:@"%d", [_params HTTPHeaderValueForContentLength]] forHTTPHeaderField:@"Content-Length"];
 		}
 	}
+    
+	NSLog(@"Headers: %@", [_URLRequest allHTTPHeaderFields]);
 }
 
 // Setup the NSURLRequest. The request must be prepared right before dispatching
@@ -176,9 +178,7 @@
     NSString* body = [[NSString alloc] initWithData:[_URLRequest HTTPBody] encoding:NSUTF8StringEncoding];
     NSLog(@"Sending %@ request to URL %@. HTTP Body: %@", [self HTTPMethod], [[self URL] absoluteString], body);
     [body release];
-    NSDate* sentAt = [NSDate date];
-    NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:[self HTTPMethod], @"HTTPMethod", [self URL], @"URL", sentAt, @"sentAt", nil];
-    [[NSNotificationCenter defaultCenter] postNotificationName:RKRequestSentNotification object:self userInfo:userInfo];
+    [[NSNotificationCenter defaultCenter] postNotificationName:RKRequestSentNotification object:self userInfo:nil];
     
     _isLoading = YES;
     RKResponse* response = [[[RKResponse alloc] initWithRequest:self] autorelease];
@@ -242,7 +242,10 @@
 		NSString* body = [[NSString alloc] initWithData:[_URLRequest HTTPBody] encoding:NSUTF8StringEncoding];
 		NSLog(@"Sending synchronous %@ request to URL %@. HTTP Body: %@", [self HTTPMethod], [[self URL] absoluteString], body);
 		[body release];
+<<<<<<< HEAD
 		
+=======
+>>>>>>> 8d03804f72b1c1b05308ce1a1281066a908edcf7
 		[[NSNotificationCenter defaultCenter] postNotificationName:RKRequestSentNotification object:self userInfo:nil];
 
 		_isLoading = YES;
