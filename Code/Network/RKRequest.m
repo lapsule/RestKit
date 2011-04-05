@@ -35,6 +35,7 @@
 		_isLoading = NO;
 		_isLoaded = NO;        
 	}
+    
 	return self;
 }
 
@@ -56,7 +57,21 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)cleanupBackgroundTask {
+    if (UIBackgroundTaskInvalid == self.backgroundTaskIdentifier) {
+        return;
+    }
+    
+    NSLog(@"Cleaning up background task...");
+    
+    UIApplication* app = [UIApplication sharedApplication];
+    if ([app respondsToSelector:@selector(beginBackgroundTaskWithExpirationHandler:)]) {
+    		[app endBackgroundTask:_backgroundTaskIdentifier];
+    		_backgroundTaskIdentifier = UIBackgroundTaskInvalid;
+    }
+}
+
+- (void)dealloc {    
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
 	self.delegate = nil;
@@ -77,6 +92,10 @@
 	_username = nil;
 	[_password release];
 	_password = nil;
+    
+    // Cleanup a background task if there is any
+    [self cleanupBackgroundTask];
+     
 	[super dealloc];
 }
 
@@ -168,20 +187,6 @@
 
 - (BOOL)shouldDispatchRequest {
     return [RKClient sharedClient] == nil || [[RKClient sharedClient] isNetworkAvailable];
-}
-
-- (void)cleanupBackgroundTask {
-    if (UIBackgroundTaskInvalid == self.backgroundTaskIdentifier) {
-        return;
-    }
-    
-    NSLog(@"Cleaning up background task...");
-    
-    UIApplication* app = [UIApplication sharedApplication];
-    if ([app respondsToSelector:@selector(beginBackgroundTaskWithExpirationHandler:)]) {
-		[app endBackgroundTask:_backgroundTaskIdentifier];
-		_backgroundTaskIdentifier = UIBackgroundTaskInvalid;
-    }
 }
 
 - (void)sendAsynchronously {
@@ -279,33 +284,28 @@
 }
 
 - (void)didFinishLoad:(RKResponse*)response {
-	_isLoading = NO;
-	_isLoaded = YES;
+  	_isLoading = NO;
+  	_isLoaded = YES;
 
-	if ([_delegate respondsToSelector:@selector(request:didLoadResponse:)]) {
-		[_delegate request:self didLoadResponse:response];
-	}
-    
-    // Moving cleanupBackgroundTask to the end of this method seems to fix the occasional crash when posting the
-    // RKRequestDidLoadResponseNotification. Blake informed me that RKRequestDidLoadResponseNotification releases the request (self),
-    // So I'm a bit unclear as to why calling -cleanupBackgroundTask doesn't crash (if self is dealloced...). Seems to work.
-    // In any case, this needs review. JBE
-    // [self cleanupBackgroundTask];
-    
-	NSDictionary* userInfo = [NSDictionary dictionaryWithObject:response forKey:@"response"];
+  	if ([_delegate respondsToSelector:@selector(request:didLoadResponse:)]) {
+  		[_delegate request:self didLoadResponse:response];
+  	}
+  
+	  NSDictionary* userInfo = [NSDictionary dictionaryWithObject:response forKey:@"response"];
     [[NSNotificationCenter defaultCenter] postNotificationName:RKRequestDidLoadResponseNotification object:self userInfo:userInfo];
     [[NSNotificationCenter defaultCenter] postNotificationName:RKResponseReceivedNotification object:response userInfo:nil];
+    
+    // TODO: Should be factored out in favor of notification. UIKit specific.
+  	if ([response isServiceUnavailable] && [[RKClient sharedClient] serviceUnavailableAlertEnabled]) {
+  		UIAlertView* alertView = [[UIAlertView alloc] initWithTitle:[[RKClient sharedClient] serviceUnavailableAlertTitle]
+  															message:[[RKClient sharedClient] serviceUnavailableAlertMessage]
+  														   delegate:nil
+  												  cancelButtonTitle:NSLocalizedString(@"OK", nil)
+  												  otherButtonTitles:nil];
+  		[alertView show];
+  		[alertView release];
 
-	if ([response isServiceUnavailable] && [[RKClient sharedClient] serviceUnavailableAlertEnabled]) {
-		UIAlertView* alertView = [[UIAlertView alloc] initWithTitle:[[RKClient sharedClient] serviceUnavailableAlertTitle]
-															message:[[RKClient sharedClient] serviceUnavailableAlertMessage]
-														   delegate:nil
-												  cancelButtonTitle:NSLocalizedString(@"OK", nil)
-												  otherButtonTitles:nil];
-		[alertView show];
-		[alertView release];
-
-	}
+  	}
     
     [self cleanupBackgroundTask];
 }
