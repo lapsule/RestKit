@@ -242,10 +242,7 @@
 		NSString* body = [[NSString alloc] initWithData:[_URLRequest HTTPBody] encoding:NSUTF8StringEncoding];
 		NSLog(@"Sending synchronous %@ request to URL %@. HTTP Body: %@", [self HTTPMethod], [[self URL] absoluteString], body);
 		[body release];
-<<<<<<< HEAD
-		
-=======
->>>>>>> 8d03804f72b1c1b05308ce1a1281066a908edcf7
+
 		[[NSNotificationCenter defaultCenter] postNotificationName:RKRequestSentNotification object:self userInfo:nil];
 
 		_isLoading = YES;
